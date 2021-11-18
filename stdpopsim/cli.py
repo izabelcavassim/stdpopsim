@@ -608,7 +608,20 @@ def add_simulate_species_parser(parser, species):
         metavar="",
         help=interval_help,
     )
-
+    bed_help = (
+        "A bed file specifing the interval where selection (given a DFE) is simulated. "
+        "Non-overlaping intervals belong to the same chromosome are required. "
+        "If no interval is specified, "
+        "selection is simulated across the entire region (contig). "
+        "Check also --dfe-interval and --dfe-annotation." # or something on those lines
+    )
+    species_parser.add_argument(
+        "--dfe-bed-file", # I prefer dfe-bed-interval
+        default=None,
+        type=str,
+        metavar="",
+        help=bed_help,
+    )
     annot_choices = [gm.id for gm in species.annotations]
     if len(species.annotations) > 0:
         species_parser.add_argument(
@@ -722,6 +735,11 @@ def add_simulate_species_parser(parser, species):
                 annot = species.get_annotations(args.dfe_annotation)
                 intervals = annot.get_chromosome_annotations(args.chromosome)
                 intervals_summary_str = f"{annot.id} elements on {args.chromosome}"
+            elif args.dfe_bed_file is not None:
+                intervals = np.loadtxt(args.dfe_bed_file, usecols=[1, 2], dtype="int")
+                left = np.min(intervals)
+                right = np.max(intervals)
+                intervals_summary_str = f"[{left}, {right})"
             else:
                 # case where no intervals specified but we have a DFE
                 intervals = np.array(
